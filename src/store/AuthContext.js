@@ -38,6 +38,7 @@ const retrieveStoredToken = () => {
 
 // provider
 export const AuthProvider = (props) => {
+  // get token if the remaining time is greater than 1 minute
   const tokenData = retrieveStoredToken();
 
   let initialToken;
