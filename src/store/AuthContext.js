@@ -1,5 +1,7 @@
-import React, { useState, createContext } from "react";
+import React, { useState, createContext, useEffect } from "react";
+let loggoutTimer;
 
+// context
 const AuthContext = createContext({
   token: "",
   isLoggedIn: false,
@@ -7,7 +9,10 @@ const AuthContext = createContext({
   logout: () => {},
 });
 
+// get remaining time in miliseconds
 const calculateRemainingTime = (expirationTime) => {
+  // function receive string date object
+
   const currentTime = new Date().getTime();
   const adjExpirationTime = new Date(expirationTime).getTime();
 
@@ -15,24 +20,65 @@ const calculateRemainingTime = (expirationTime) => {
   return remainingTime;
 };
 
+const retrieveStoredToken = () => {
+  const expirationTime = localStorage.getItem("expirationTime");
+  const remainingTime = calculateRemainingTime(expirationTime);
+
+  if (remainingTime <= 60000) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("expirationTime");
+    return null;
+  }
+
+  return {
+    token: localStorage.getItem("token"),
+    duration: remainingTime,
+  };
+};
+
+// provider
 export const AuthProvider = (props) => {
-  const initialToken = localStorage.getItem("token");
+  const tokenData = retrieveStoredToken();
+
+  let initialToken;
+  if (tokenData) {
+    initialToken = tokenData.token;
+  }
+  // get from stored token in localStorage
+
   const [token, setToken] = useState(initialToken);
 
+  // if no token -> false
   const userIsLoggedIn = !!token;
 
   const logoutHandler = () => {
     setToken(null);
     localStorage.removeItem("token");
+
+    // clear automate loggout if user loggedOut manually
+    if (loggoutTimer) {
+      clearTimeout(loggoutTimer);
+    }
   };
 
   const loginHandler = (token, expirationTime) => {
     setToken(token);
     localStorage.setItem("token", token);
+    localStorage.setItem("expirationTime", expirationTime);
 
     const remainingTime = calculateRemainingTime(expirationTime);
-    setTimeout(logoutHandler, remainingTime);
+    // default loggin and loggout timer
+    loggoutTimer = setTimeout(logoutHandler, remainingTime);
   };
+
+  // timeout func for auto loggin
+  useEffect(() => {
+    if (tokenData) {
+      console.log(tokenData.duration);
+      // loggout after user opened the browser again
+      loggoutTimer = setTimeout(logoutHandler, tokenData.duration);
+    }
+  }, [tokenData]);
 
   const contextValue = {
     token,

@@ -10,12 +10,16 @@ const MainNavigation = () => {
 
   const isLoggedIn = authCtx.isLoggedIn;
 
+  // router
   const history = useHistory();
 
+  // logOut btn
   const loggoutHandler = () => {
     authCtx.logout();
+    // redirect
     history.replace("/auth");
   };
+
   return (
     <header className={classes.header}>
       <Link to="/">

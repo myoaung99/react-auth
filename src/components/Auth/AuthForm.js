@@ -5,27 +5,31 @@ import { useHistory } from "react-router-dom";
 import classes from "./AuthForm.module.css";
 
 const AuthForm = () => {
+  // local states
   const [isLogin, setIsLogin] = useState(true);
-  const emailInputRef = useRef();
-  const passwordInputRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
 
+  // refs
+  const emailInputRef = useRef();
+  const passwordInputRef = useRef();
+
+  // global auth token context
   const authCtx = useContext(AuthContext);
 
+  // router v5 navigate method
   const history = useHistory();
 
+  // switch between login & sign up
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
   };
 
+  // form submit handler
   const submitHandler = (event) => {
     event.preventDefault();
 
     const enteredEmail = emailInputRef.current.value;
     const enteredPassword = passwordInputRef.current.value;
-
-    console.log("submit");
-    console.log(isLogin);
 
     // optional: Add validation
     let url;
@@ -38,7 +42,10 @@ const AuthForm = () => {
       url =
         "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDrWmjAnH2SbhX09iBg8JL0GWdb6NtY9LU";
     }
+    // loading state -> true
     setIsLoading(true);
+
+    // send http request
     fetch(url, {
       method: "POST",
       body: JSON.stringify({
@@ -49,10 +56,11 @@ const AuthForm = () => {
       headers: {
         "Content-Type": "application/json",
       },
-    })
+    }) // handle response
       .then((res) => {
+        // done loading -> false
         setIsLoading(false);
-        // handle response
+
         if (res.ok) {
           return res.json();
         } else {
@@ -72,12 +80,14 @@ const AuthForm = () => {
         const expireTime = new Date(
           new Date().getTime() + +data.expiresIn * 1000
         );
+
+        // login -> set token to global state
         authCtx.login(data.idToken, expireTime.toISOString());
+        // redirect to /
         history.replace("/");
       })
       .catch((err) => {
         alert(err.message);
-        console.log(err.message);
       });
   };
 
