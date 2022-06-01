@@ -1,4 +1,4 @@
-import React, { useState, createContext, useEffect } from "react";
+import React, { useState, createContext, useEffect, useCallback } from "react";
 let loggoutTimer;
 
 // context
@@ -52,15 +52,17 @@ export const AuthProvider = (props) => {
   // if no token -> false
   const userIsLoggedIn = !!token;
 
-  const logoutHandler = () => {
+  const logoutHandler = useCallback(() => {
     setToken(null);
     localStorage.removeItem("token");
+    // to get new expiration time after for new loggin
+    localStorage.removeItem("expirationTime");
 
     // clear automate loggout if user loggedOut manually
     if (loggoutTimer) {
       clearTimeout(loggoutTimer);
     }
-  };
+  }, []);
 
   const loginHandler = (token, expirationTime) => {
     setToken(token);
@@ -79,7 +81,7 @@ export const AuthProvider = (props) => {
       // loggout after user opened the browser again
       loggoutTimer = setTimeout(logoutHandler, tokenData.duration);
     }
-  }, [tokenData]);
+  }, [tokenData, logoutHandler]);
 
   const contextValue = {
     token,
